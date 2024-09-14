@@ -160,7 +160,7 @@
 
 <svelte:window on:resize={handleResize} on:keydown={handleKeydown}/>
 
-<div class="relative h-screen p-5 flex flex-col justify-center items-center">
+<div class="relative h-screen p-5 flex flex-col justify-center items-center" tabindex="-1">
   <button
     on:click={toggleDarkMode}
     class="absolute top-4 left-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
