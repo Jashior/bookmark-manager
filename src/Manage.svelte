@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { navigate } from "svelte-routing";
-  import { ArrowLeft, X } from 'lucide-svelte';
+  import { ArrowLeft } from 'lucide-svelte';
   import { darkMode } from './store.js';
 
   let bookmarks = [];
@@ -256,6 +256,7 @@
             <table class="w-full">
               <thead>
                 <tr>
+                  <th class="text-left">No.</th>
                   <th class="text-left">Title</th>
                   <th class="text-left">URL</th>
                   <th class="text-left">Category</th>
@@ -263,8 +264,9 @@
                 </tr>
               </thead>
               <tbody>
-                {#each bookmarks as bookmark (bookmark.id)}
+                {#each bookmarks as bookmark, index (bookmark.id)}
                   <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <td>{index + 1}</td>
                     <td>{bookmark.title}</td>
                     <td><a href={bookmark.url} target="_blank" class="text-blue-500 dark:text-blue-400 hover:underline">{bookmark.url}</a></td>
                     <td>{bookmark.category || 'Uncategorized'}</td>
@@ -293,13 +295,15 @@
             <table class="w-full">
               <thead>
                 <tr>
+                  <th class="text-left">No.</th>
                   <th class="text-left">Name</th>
                   <th class="text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {#each categories as category (category.id)}
+                {#each categories as category, index (category.id)}
                   <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <td>{index + 1}</td>
                     <td>{category.name}</td>
                     <td>
                       <button
@@ -324,67 +328,68 @@
       </div>
     </div>
   </div>
-{#if editingBookmark}
-  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 p-4 rounded">
-      <h2 class="text-xl font-semibold mb-2">Edit Bookmark</h2>
-      <input
-        class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        type="text"
-        bind:value={editingBookmark.title}
-      />
-      <input
-        class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        type="text"
-        bind:value={editingBookmark.url}
-      />
-      <select
-        class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        bind:value={editingBookmark.category}
-      >
-        <option value="">No Category</option>
-        {#each categories as category}
-          <option value={category.name}>{category.name}</option>
-        {/each}
-      </select>
-      <button
-        class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition-colors duration-200"
-        on:click={updateBookmark}
-      >
-        Save
-      </button>
-      <button
-        class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200"
-        on:click={() => editingBookmark = null}
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-{/if}
 
-{#if editingCategory}
-  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 p-4 rounded">
-      <h2 class="text-xl font-semibold mb-2">Edit Category</h2>
-      <input
-        class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        type="text"
-        bind:value={editingCategory.name}
-      />
-      <button
-        class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition-colors duration-200"
-        on:click={updateCategory}
-      >
-        Save
-      </button>
-      <button
-        class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200"
-        on:click={() => editingCategory = null}
-      >
-        Cancel
-      </button>
+  {#if editingBookmark}
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded">
+        <h2 class="text-xl font-semibold mb-2">Edit Bookmark</h2>
+        <input
+          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          type="text"
+          bind:value={editingBookmark.title}
+        />
+        <input
+          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          type="text"
+          bind:value={editingBookmark.url}
+        />
+        <select
+          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          bind:value={editingBookmark.category}
+        >
+          <option value="">No Category</option>
+          {#each categories as category}
+            <option value={category.name}>{category.name}</option>
+          {/each}
+        </select>
+        <button
+          class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition-colors duration-200"
+          on:click={updateBookmark}
+        >
+          Save
+        </button>
+        <button
+          class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200"
+          on:click={() => editingBookmark = null}
+        >
+          Cancel
+        </button>
+      </div>
     </div>
-  </div>
-{/if}
+  {/if}
+
+  {#if editingCategory}
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded">
+        <h2 class="text-xl font-semibold mb-2">Edit Category</h2>
+        <input
+          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          type="text"
+          bind:value={editingCategory.name}
+        />
+        <button
+          class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition-colors duration-200"
+          on:click={updateCategory}
+        >
+          Save
+        </button>
+        <button
+          class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200"
+          on:click={() => editingCategory = null}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  {/if}
 </div>
