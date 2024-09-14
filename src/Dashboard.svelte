@@ -4,14 +4,15 @@
   import { Cog, Moon, Sun, Search, X, Grid, List } from 'lucide-svelte';
   import { fade, scale } from 'svelte/transition';
   import { colorThief } from './colorThief.js';
-  import { darkMode } from './store.js';
+  import { darkMode, bookmarks as bookmarksStore } from './store.js';
 
   let bookmarks = [];
   let categories = [];
   let searchTerm = '';
   let searchInput;
   let highlightedBookmark = null;
-  let displayMode = localStorage.getItem('displayMode') || 'grid';
+  let draggedBookmark = null;
+  let dropTarget = null;
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -41,7 +42,7 @@
       const row = Math.floor(index / columns) % rows;
       const left = padding + col * bookmarkWidth;
       const top = padding + row * bookmarkHeight;
-      return { ...bookmark, left, top };
+      return { ...bookmark, left, top, index };
     });
   }
 
@@ -79,9 +80,39 @@
     if (searchInput) searchInput.focus();
   }
 
-  function toggleDisplayMode() {
-    displayMode = displayMode === 'grid' ? 'category' : 'grid';
-    localStorage.setItem('displayMode', displayMode);
+  function handleDragStart(event, bookmark) {
+    draggedBookmark = bookmark;
+    event.dataTransfer.setData('text/plain', bookmark.id);
+    event.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleDragOver(event, bookmark) {
+    event.preventDefault();
+    if (bookmark !== draggedBookmark) {
+      dropTarget = bookmark;
+    }
+  }
+
+  function handleDragLeave() {
+    dropTarget = null;
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+    if (draggedBookmark && dropTarget && draggedBookmark !== dropTarget) {
+      const draggedIndex = bookmarks.findIndex(b => b.id === draggedBookmark.id);
+      const targetIndex = bookmarks.findIndex(b => b.id === dropTarget.id);
+      
+      bookmarks = bookmarks.filter(b => b.id !== draggedBookmark.id);
+      bookmarks.splice(targetIndex, 0, draggedBookmark);
+      
+      bookmarks = bookmarks.map((bookmark, index) => ({ ...bookmark, index }));
+      
+      layoutBookmarks();
+      bookmarksStore.set(bookmarks);
+    }
+    draggedBookmark = null;
+    dropTarget = null;
   }
 
   $: filteredBookmarks = bookmarks.filter(bookmark => 
@@ -90,11 +121,6 @@
   );
 
   $: highlightedBookmark = filteredBookmarks.length === 1 ? filteredBookmarks[0] : null;
-
-  $: groupedBookmarks = categories.reduce((acc, category) => {
-    acc[category.name] = filteredBookmarks.filter(bookmark => bookmark.category === category.name);
-    return acc;
-  }, { 'Uncategorized': filteredBookmarks.filter(bookmark => !bookmark.category) });
 </script>
 
 <svelte:window on:resize={layoutBookmarks} on:keydown={handleKeydown}/>
@@ -137,71 +163,33 @@
   </div>
 
   <div class="relative w-full h-full" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
-    {#if displayMode === 'grid'}
-      {#each filteredBookmarks as bookmark (bookmark.id)}
-        <a
-          href={bookmark.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="absolute w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110 hover:z-10 {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''}"
-          style="left: {bookmark.left}px; top: {bookmark.top}px;"
-          in:fade={{duration: 300}}
-          out:scale={{duration: 300}}
-        >
-          <img
-            src={getFaviconUrl(bookmark.url)}
-            alt={bookmark.title}
-            class="w-10 h-10 mb-1"
-            on:load={(e) => {
-              const color = colorThief.getColor(e.target);
-              e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
-              e.target.closest('a').style.color = colorThief.getContrastingColor(color);
-            }}
-          />
-          <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
-        </a>
-      {/each}
-    {:else}
-      <div class="overflow-y-auto h-full">
-        {#each Object.entries(groupedBookmarks) as [category, bookmarks]}
-          <div class="mb-4">
-            <h2 class="text-xl font-semibold mb-2">{category}</h2>
-            <div class="grid grid-cols-10 gap-2">
-              {#each bookmarks as bookmark (bookmark.id)}
-                <a
-                  href={bookmark.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110  {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''}"
-                >
-                  <img
-                    src={getFaviconUrl(bookmark.url)}
-                    alt={bookmark.title}
-                    class="w-10 h-10 mb-1"
-                    on:load={(e) => {
-                      const color = colorThief.getColor(e.target);
-                      e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
-                      e.target.closest('a').style.color = colorThief.getContrastingColor(color);
-                    }}
-                  />
-                  <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
-                </a>
-              {/each}
-            </div>
-          </div>
-        {/each}
-      </div>
-    {/if}
-  </div>
-
-  <button
-    on:click={toggleDisplayMode}
-    class="absolute bottom-4 left-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-  >
-    {#if displayMode === 'grid'}
-      <List size={24} />
-    {:else}
-      <Grid size={24} />
-    {/if}
-  </button>
+    {#each filteredBookmarks as bookmark (bookmark.id)}
+      <a
+        href={bookmark.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="absolute w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110 hover:z-10 {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''} {dropTarget && dropTarget.id === bookmark.id ? 'border-2 border-blue-500' : ''}"
+        style="left: {bookmark.left}px; top: {bookmark.top}px;"
+        in:fade={{duration: 300}}
+        out:scale={{duration: 300}}
+        draggable="true"
+        on:dragstart={(e) => handleDragStart(e, bookmark)}
+        on:dragover={(e) => handleDragOver(e, bookmark)}
+        on:dragleave={handleDragLeave}
+        on:drop={handleDrop}
+      >
+        <img
+          src={getFaviconUrl(bookmark.url)}
+          alt={bookmark.title}
+          class="w-10 h-10 mb-1"
+          on:load={(e) => {
+            const color = colorThief.getColor(e.target);
+            e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
+            e.target.closest('a').style.color = colorThief.getContrastingColor(color);
+          }}
+        />
+        <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
+      </a>
+    {/each}
+</div>
 </div>

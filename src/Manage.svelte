@@ -231,7 +231,7 @@
                   <th class="text-left">Title</th>
                   <th class="text-left">URL</th>
                   <th class="text-left">Category</th>
-                  <th>Actions</th>
+                  <th class="text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,7 +290,7 @@
               <thead>
                 <tr>
                   <th class="text-left">Name</th>
-                  <th>Actions</th>
+                  <th class="text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
