@@ -2,8 +2,8 @@
   import { onMount } from 'svelte';
   import { navigate } from "svelte-routing";
   import { ArrowLeft } from 'lucide-svelte';
-  import { darkMode } from './store.js';
   import { Star, Star as StarOutline } from 'lucide-svelte';
+  import { Pencil, X } from 'lucide-svelte'; // Import the pencil and cross icons
 
   let bookmarks = [];
   let categories = [];
@@ -12,15 +12,20 @@
   let editingBookmark = null;
   let editingCategory = null;
   let activeTab = 'bookmarks';
+  let iconSize = 'small'; // Default icon size
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
-    const storedCategories = localStorage.getItem('categories');
     if (storedBookmarks) {
       bookmarks = JSON.parse(storedBookmarks);
     }
+    const storedCategories = localStorage.getItem('categories');
     if (storedCategories) {
       categories = JSON.parse(storedCategories);
+    }
+    const savedSize = localStorage.getItem('iconSize');
+    if (savedSize) {
+      iconSize = savedSize;
     }
   });
 
@@ -107,6 +112,10 @@
   saveBookmarks();
 }
 
+  // Save settings to local storage
+  function saveSettings() {
+    localStorage.setItem('iconSize', iconSize);
+  }
 
   function exportData() {
     const data = {
@@ -161,12 +170,18 @@
     >
       Categories
     </button>
+    <button
+        class="px-4 py-2 rounded mr-2 {activeTab === 'settings' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+        on:click={() => activeTab = 'settings'}
+      >
+        Settings
+    </button>
     </div>
     <h1 class="text-3xl font-bold">Bookmarks Manager</h1>
 
     <div class="flex items-center">
       <button
-        class="bg-purple-500 text-white px-4 py-2 rounded mr-2 hover:bg-purple-600 transition-colors duration-200"
+        class="bg-blue-500 text-white px-4 py-2 rounded mr-2 hover:bg-blue-600 transition-colors duration-200"
         on:click={exportData}
       >
         Export
@@ -231,7 +246,7 @@
             </button>
             </div>
           </div>
-        {:else}
+        {:else if activeTab === 'categories'}
           <div class="mb-4 flex justify-between items-center">
             <div>
               <h2 class="text-xl font-semibold mb-2">Add Category</h2>
@@ -253,6 +268,25 @@
             >
               Delete All Categories
             </button>
+            </div>
+          </div>
+        {:else if activeTab === 'settings'}
+          <div class="p-5">
+            <h1 class="text-xl font-bold mb-4">Settings</h1>
+            
+            <div class="flex items-center mb-4">
+              <h2 class="text-lg font-semibold mr-4">Icon Size</h2>
+              <div class="flex gap-4">
+                {#each ['small', 'medium', 'large'] as size}
+                  <button
+                    class="px-4 py-2 rounded-full transition-colors duration-200
+                          {iconSize === size ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+                    on:click={() => { iconSize = size; saveSettings(); }}
+                  >
+                    {size.charAt(0).toUpperCase() + size.slice(1)}
+                  </button>
+                {/each}
+              </div>
             </div>
           </div>
         {/if}
@@ -294,16 +328,18 @@
                     <td>{bookmark.category || 'Uncategorized'}</td>
                     <td>
                       <button
+                        title="Edit"
                         class="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600 transition-colors duration-200"
                         on:click={() => editBookmark(bookmark)}
                       >
-                        Edit
+                        <Pencil size={20} />
                       </button>
                       <button
+                        title="Delete"
                         class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors duration-200"
                         on:click={() => deleteBookmark(bookmark.id)}
                       >
-                        Delete
+                        <X size={20} />
                       </button>
                     </td>
                   </tr>
@@ -311,7 +347,7 @@
               </tbody>
             </table>
           </div>
-        {:else}
+        {:else if activeTab === 'categories'}
           <div class="mb-4">
             <h2 class="text-xl font-semibold mb-2">Categories</h2>
             <table class="w-full">
@@ -329,16 +365,18 @@
                     <td>{category.name}</td>
                     <td>
                       <button
+                        title="Edit"
                         class="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600 transition-colors duration-200"
                         on:click={() => editCategory(category)}
                       >
-                        Edit
+                        <Pencil size={20} />
                       </button>
                       <button
+                        title="Delete"
                         class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors duration-200"
                         on:click={() => deleteCategory(category.id)}
                       >
-                        Delete
+                        <X size={20} />
                       </button>
                     </td>
                   </tr>

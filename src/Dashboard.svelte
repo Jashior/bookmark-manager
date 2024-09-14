@@ -17,6 +17,7 @@
   let dropTarget = null;
   let selectedCategory = 'All';
   let currentCategoryIndex = 0;
+  let iconSize = 'small'; // Default icon size
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -29,7 +30,10 @@
       categories = JSON.parse(storedCategories);
     }
     if (searchInput) searchInput.focus();
-
+    const savedSize = localStorage.getItem('iconSize');
+    if (savedSize) {
+      iconSize = savedSize;
+    }
     // Add event listener for window resize
     window.addEventListener('resize', handleResize);
     // Add wheel event listener for mouse scroll
@@ -59,8 +63,8 @@
 
   function layoutBookmarks() {
     const padding = 10;
-    const bookmarkWidth = 100;
-    const bookmarkHeight = 100;
+    const bookmarkWidth = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
+    const bookmarkHeight = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
     const columns = Math.floor((containerWidth - padding * 2) / bookmarkWidth);
     const rows = Math.floor((containerHeight - padding * 2) / bookmarkHeight);
 
@@ -71,8 +75,7 @@
       const top = padding + row * bookmarkHeight;
       return { ...bookmark, left, top, index };
     });
-}
-
+  }
 
   function getFaviconUrl(url) {
     try {
@@ -174,7 +177,14 @@ function handleDrop(event) {
       currentCategoryIndex = 0; // Wrap to "All"
     }
 
-    selectCategory(currentCategoryIndex);
+    let selectedCategory;
+    if (currentCategoryIndex === 0) {
+      selectedCategory = 'All';
+    } else {
+      selectedCategory = categories[currentCategoryIndex - 1].name;
+    }
+
+    selectCategory(selectedCategory);
   }
 
   $: {
@@ -189,13 +199,17 @@ function handleDrop(event) {
   layoutBookmarks();
 }
 
-  function selectCategory(index) {
-    if (index === 0) {
-      selectedCategory = 'All';
-    } else {
-      selectedCategory = categories[index - 1].name;
-    }
-  }
+function selectCategory(name) {
+  // Update the selected category
+  selectedCategory = name;
+
+  // Determine the index of the selected category
+  const index = name === 'All' ? 0 : categories.findIndex(category => category.name === name) + 1;
+
+  // Update the current category index
+  currentCategoryIndex = index;
+}
+
 
   $: highlightedBookmark = filteredBookmarks.length === 1 ? filteredBookmarks[0] : null;
 </script>
@@ -244,8 +258,6 @@ function handleDrop(event) {
       class="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200
       hover:bg-blue-400 hover:text-white
       dark:hover:bg-blue-600 dark:hover:text-white
-      focus:outline-none focus:ring-2 focus:ring-blue-500 
-      dark:focus:ring-blue-400
       {selectedCategory === 'All' 
         ? 'bg-blue-500 text-white dark:bg-blue-600' 
         : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}"  
@@ -258,8 +270,6 @@ function handleDrop(event) {
       class="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200
       hover:bg-blue-400 hover:text-white
       dark:hover:bg-blue-600 dark:hover:text-white
-      focus:outline-none focus:ring-2 focus:ring-blue-500 
-      dark:focus:ring-blue-400
       {selectedCategory === category.name 
         ? 'bg-blue-500 text-white dark:bg-blue-600' 
         : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}"
@@ -276,7 +286,13 @@ function handleDrop(event) {
         href={bookmark.url}
         target="_blank"
         rel="noopener noreferrer"
-        class="absolute w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110 hover:z-10 {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''} {dropTarget && dropTarget.id === bookmark.id ? 'border-2 border-blue-500' : ''} dark:shadow-lg dark:shadow-gray-800"
+        class="absolute rounded-lg shadow-lg flex flex-col items-center justify-center p-2 
+        transition-all duration-300 hover:scale-110 hover:z-10 
+        {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''} 
+        {dropTarget && dropTarget.id === bookmark.id ? 'border-2 border-blue-500' : ''} 
+        dark:shadow-lg dark:shadow-gray-800 
+        {iconSize == 'small' ? 'w-20' : iconSize == 'medium' ? 'w-30' : 'w-40'}
+        {iconSize == 'small' ? 'h-20' : iconSize == 'medium' ? 'h-30' : 'h-40'}"
         style="left: {bookmark.left}px; top: {bookmark.top}px;"
         in:fade={{duration: 300}}
         out:scale={{duration: 300}}
@@ -289,7 +305,8 @@ function handleDrop(event) {
       <img
         src={getFaviconUrl(bookmark.url)}
         alt={bookmark.title}
-        class="w-10 h-10 mb-1"
+        class="{iconSize == 'small' ? 'w-10' : iconSize == 'medium' ? 'w-20' : 'w-20'}
+        {iconSize == 'small' ? 'h-10' : iconSize == 'medium' ? 'h-20' : 'h-20'} mb-1"
         on:load={(e) => {
           const color = colorThief.getColor(e.target);
           e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
