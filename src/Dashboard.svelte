@@ -121,19 +121,10 @@
   function handleDragOver(event, bookmark) {
   event.preventDefault();
   
-  if (
-    ((draggedBookmark && draggedBookmark.favorite) && (bookmark && !bookmark.favorite)) || 
-    ((draggedBookmark && !draggedBookmark.favorite) && (bookmark && bookmark.favorite))
-  ) {
-    // Set cursor to not-allowed if swapping with non-favorite
-    event.dataTransfer.dropEffect = 'none'; 
-    document.body.style.cursor = 'not-allowed';
-  } else {
-    // Allow dropping
+
     event.dataTransfer.dropEffect = 'move'; 
     document.body.style.cursor = 'move';
     dropTarget = bookmark;
-  }
 }
 
 function handleDragLeave() {
@@ -144,18 +135,17 @@ function handleDragLeave() {
 function handleDrop(event) {
   event.preventDefault();
 
-  if (draggedBookmark && dropTarget && draggedBookmark !== dropTarget) {
-    const draggedIndex = bookmarks.findIndex(b => b.id === draggedBookmark.id);
-    const targetIndex = bookmarks.findIndex(b => b.id === dropTarget.id);
-    
-    bookmarks = bookmarks.filter(b => b.id !== draggedBookmark.id);
-    bookmarks.splice(targetIndex, 0, draggedBookmark);
-    
-    bookmarks = bookmarks.map((bookmark, index) => ({ ...bookmark, index }));
-    
-    layoutBookmarks();
-    bookmarksStore.set(bookmarks);
-  }
+  const draggedIndex = bookmarks.findIndex(b => b.id === draggedBookmark.id);
+  const targetIndex = bookmarks.findIndex(b => b.id === dropTarget.id);
+  
+  bookmarks = bookmarks.filter(b => b.id !== draggedBookmark.id);
+  bookmarks.splice(targetIndex, 0, draggedBookmark);
+  
+  bookmarks = bookmarks.map((bookmark, index) => ({ ...bookmark, index }));
+  
+  layoutBookmarks();
+  bookmarksStore.set(bookmarks);
+  
   draggedBookmark = null;
   dropTarget = null;
   document.body.style.cursor = ''; // Reset cursor
@@ -194,7 +184,6 @@ function handleDrop(event) {
       (bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bookmark.url.toLowerCase().includes(searchTerm.toLowerCase()))
     )
-    .sort((a, b) => b.favorite - a.favorite); // Sort so that favorited bookmarks appear first
   
   layoutBookmarks();
 }

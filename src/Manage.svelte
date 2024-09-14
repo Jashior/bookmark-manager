@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { navigate } from "svelte-routing";
   import { ArrowLeft } from 'lucide-svelte';
-  import { Star, Star as StarOutline } from 'lucide-svelte';
+  import { Star, Star as StarOutline, GripVertical } from 'lucide-svelte';
   import { Pencil, X } from 'lucide-svelte'; // Import the pencil and cross icons
   import Modal from './Modal.svelte';
 
@@ -16,6 +16,8 @@
   let editingCategory = null;
   let activeTab = 'bookmarks';
   let iconSize = 'small'; // Default icon size
+  let draggedItem = null;
+  let draggedOverItem = null;
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -38,6 +40,43 @@
 
   function saveCategories() {
     localStorage.setItem('categories', JSON.stringify(categories));
+  }
+
+  function handleDragStart(event, item, list) {
+    draggedItem = { item, list };
+    event.dataTransfer.effectAllowed = 'move';
+    event.target.style.opacity = '0.5';
+  }
+
+  function handleDragOver(event, item) {
+    event.preventDefault();
+    draggedOverItem = item;
+  }
+
+  function handleDragEnd(event) {
+    event.target.style.opacity = '1';
+    draggedItem = null;
+    draggedOverItem = null;
+  }
+
+  function handleDrop(event, list) {
+    event.preventDefault();
+    if (!draggedItem || draggedItem.list !== list) return;
+
+    const items = list === 'bookmarks' ? bookmarks : categories;
+    const fromIndex = items.findIndex(item => item.id === draggedItem.item.id);
+    const toIndex = items.findIndex(item => item.id === draggedOverItem.id);
+
+    if (fromIndex !== toIndex) {
+      items.splice(toIndex, 0, items.splice(fromIndex, 1)[0]);
+      if (list === 'bookmarks') {
+        bookmarks = [...items];
+        saveBookmarks();
+      } else {
+        categories = [...items];
+        saveCategories();
+      }
+    }
   }
 
   function addBookmark() {
@@ -135,8 +174,8 @@
   saveBookmarks();
 }
 
-  // Save settings to local storage
-  function saveSettings() {
+  // Save Config to local storage
+  function saveConfig() {
     localStorage.setItem('iconSize', iconSize);
   }
 
@@ -194,10 +233,10 @@
       Categories
     </button>
     <button
-        class="px-4 py-2 rounded mr-2 {activeTab === 'settings' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-        on:click={() => activeTab = 'settings'}
+        class="px-4 py-2 rounded mr-2 {activeTab === 'config' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+        on:click={() => activeTab = 'config'}
       >
-        Settings
+        Config
     </button>
     </div>
     <h1 class="text-3xl font-bold">Bookmarks Manager</h1>
@@ -293,24 +332,21 @@
             </button>
             </div>
           </div>
-        {:else if activeTab === 'settings'}
-          <div class="p-5">
-            <h1 class="text-xl font-bold mb-4">Settings</h1>
-            
-            <div class="flex items-center mb-4">
-              <h2 class="text-lg font-semibold mr-4">Icon Size</h2>
-              <div class="flex gap-4">
-                {#each ['small', 'medium', 'large'] as size}
-                  <button
-                    class="px-4 py-2 rounded-full transition-colors duration-200
-                          {iconSize === size ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-                    on:click={() => { iconSize = size; saveSettings(); }}
-                  >
-                    {size.charAt(0).toUpperCase() + size.slice(1)}
-                  </button>
-                {/each}
-              </div>
-            </div>
+        {:else if activeTab === 'config'}
+          <div class="mb-4 flex justify-between items-center">
+            <h2 class="text-xl font-semibold mb-2">Update Config</h2>
+          </div>
+          <div class="mb-4 justify-between items-center">
+            <h2 class="text-lg font-semibold mr-4">Icon Size</h2>
+              {#each ['small', 'medium', 'large'] as size}
+              <button
+                class="px-4 py-2 m-2 rounded-full transition-colors duration-200
+                      {iconSize === size ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+                on:click={() => { iconSize = size; saveConfig(); }}
+              >
+                {size.charAt(0).toUpperCase() + size.slice(1)}
+              </button>
+            {/each}
           </div>
         {/if}
       </div>
@@ -330,20 +366,22 @@
                   <th class="text-left">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody on:drop|preventDefault={(event) => handleDrop(event, 'bookmarks')}>
                 {#each bookmarks as bookmark, index (bookmark.id)}
-                  <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <tr
+                    class="hover:bg-gray-100 dark:hover:bg-gray-700"
+                    draggable={true}
+                    on:dragstart={(event) => handleDragStart(event, bookmark, 'bookmarks')}
+                    on:dragover={(event) => handleDragOver(event, bookmark)}
+                    on:dragend={handleDragEnd}
+                  >
                     <td>{index + 1}</td>
                     <td>
                       <button
                         class="text-yellow-500 dark:text-yellow-400"
                         on:click={() => toggleFavorite(bookmark.id)}
                       >
-                        {#if bookmark.favorite}
-                          <Star size={24} class="fill-current" />
-                        {:else}
-                          <Star size={24} class="stroke-current" />
-                        {/if}
+                        <Star size={24} class={bookmark.favorite ? "fill-current" : "stroke-current"} />
                       </button>
                     </td>
                     <td>{bookmark.title}</td>
@@ -381,9 +419,15 @@
                   <th class="text-left">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody on:drop|preventDefault={(event) => handleDrop(event, 'categories')}>
                 {#each categories as category, index (category.id)}
-                  <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <tr
+                    class="hover:bg-gray-100 dark:hover:bg-gray-700"
+                    draggable={true}
+                    on:dragstart={(event) => handleDragStart(event, category, 'categories')}
+                    on:dragover={(event) => handleDragOver(event, category)}
+                    on:dragend={handleDragEnd}
+                  >
                     <td>{index + 1}</td>
                     <td>{category.name}</td>
                     <td>
