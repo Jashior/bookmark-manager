@@ -16,6 +16,7 @@
   });
 
   function saveBookmarks() {
+    // saving
     localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
   }
 
