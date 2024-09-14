@@ -23,7 +23,7 @@
     const storedBookmarks = localStorage.getItem('bookmarks');
     const storedCategories = localStorage.getItem('categories');
     if (storedBookmarks) {
-      bookmarks = JSON.parse(storedBookmarks);
+      bookmarks = JSON.parse(storedBookmarks).filter(b => !b.hidden);
       layoutBookmarks();
     }
     if (storedCategories) {

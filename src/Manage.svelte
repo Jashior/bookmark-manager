@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { navigate } from "svelte-routing";
   import { ArrowLeft } from 'lucide-svelte';
-  import { Star, Star as StarOutline, GripVertical, Search } from 'lucide-svelte';
+  import { Star, Star as StarOutline, GripVertical, Search, EyeOff, EyeIcon } from 'lucide-svelte';
   import { Pencil, X } from 'lucide-svelte'; // Import the pencil and cross icons
   import WarningModal from './WarningModal.svelte';
   import ConfirmModal from './ConfirmModal.svelte';
@@ -62,6 +62,13 @@
     draggedOverItem = null;
   }
 
+  function handleEnterKey(event, action) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    action();
+  }
+}
+
   function handleDrop(event, list) {
     event.preventDefault();
     if (!draggedItem || draggedItem.list !== list) return;
@@ -83,6 +90,16 @@
   }
 
   function addBookmark() {
+
+    function isValidUrl(url) {
+        try {
+          new URL(url);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
     if (newBookmark.title.length > 20) {
       warningMessage = 'Bookmark title cannot be longer than 20 characters.';
       showWarningModal = true;
@@ -94,9 +111,26 @@
       return;
     }
     if (newBookmark.title && newBookmark.url) {
-      bookmarks = [...bookmarks, { ...newBookmark, id: Date.now(), favorite: false }];
+
+      if (!newBookmark.url.startsWith('www.') && !newBookmark.url.startsWith('https://') && !newBookmark.url.startsWith('http://')) {
+        newBookmark.url = `https://www.${newBookmark.url}`;
+      }
+      else if (newBookmark.url.startsWith('www.')) {
+        newBookmark.url = `https://${newBookmark.url}`;
+      }
+      if (!isValidUrl(newBookmark.url)) {
+        warningMessage = 'URL is not valid';
+        showWarningModal = true;
+        return;
+      }
+
+      bookmarks = [...bookmarks, { ...newBookmark, id: Date.now(), favorite: false, hidden: false }];
       newBookmark = { title: '', url: '', category: '' };
       saveBookmarks();
+    } else {
+      warningMessage = 'Both title and URL most be set';
+      showWarningModal = true;
+      return;
     }
   }
 
@@ -143,6 +177,13 @@
 
   function deleteBookmark(id) {
     bookmarks = bookmarks.filter(b => b.id !== id);
+    saveBookmarks();
+  }
+
+  function toggleHideBookmark(id) {
+    bookmarks = bookmarks.map(b =>
+      b.id === id ? { ...b, hidden: !b.hidden } : b
+    );
     saveBookmarks();
   }
 
@@ -321,12 +362,14 @@
                 type="text"
                 placeholder="Title"
                 bind:value={newBookmark.title}
+                on:keypress={(e) => handleEnterKey(e, addBookmark)}
               />
               <input
                 class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 type="text"
                 placeholder="URL"
                 bind:value={newBookmark.url}
+                on:keypress={(e) => handleEnterKey(e, addBookmark)}
               />
               <select
                 class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -366,6 +409,7 @@
                 type="text"
                 placeholder="Category Name"
                 bind:value={newCategory.name}
+                on:keypress={(e) => handleEnterKey(e, addCategory)}
               />
               <button
                 class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
@@ -443,6 +487,17 @@
                     <td>{bookmark.category || 'Uncategorized'}</td>
                     <td>
                       <button
+                      title={bookmark.hidden ? "Show" : "Hide"}
+                      class="{bookmark.hidden ? 'bg-purple-950' : 'bg-purple-500'} text-white px-2 py-1 rounded mr-2 hover:bg-purple-800 transition-colors duration-200"
+                      on:click={() => toggleHideBookmark(bookmark.id)}
+                    >
+                      {#if bookmark.hidden}
+                        <EyeOff size={20} />
+                      {:else}
+                        <EyeIcon size={20} />
+                      {/if}
+                    </button>
+                      <button
                         title="Edit"
                         class="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600 transition-colors duration-200"
                         on:click={() => editBookmark(bookmark)}
@@ -519,6 +574,7 @@
           class="border p-2 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           type="text"
           bind:value={editingBookmark.title}
+          on:keypress={(e) => handleEnterKey(e, updateBookmark)}
           placeholder="Title"
         />
       </div>
@@ -527,6 +583,7 @@
           class="border p-2 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           type="text"
           bind:value={editingBookmark.url}
+          on:keypress={(e) => handleEnterKey(e, updateBookmark)}
           placeholder="URL"
         />
       </div>
@@ -567,6 +624,7 @@
           class="border p-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           type="text"
           bind:value={editingCategory.name}
+          on:keypress={(e) => handleEnterKey(e, updateCategory)}
         />
         <div class="flex justify-end space-x-2">
           <button
@@ -587,7 +645,8 @@
   {/if}
 
   {#if showWarningModal}
-    <WarningModal isOpen={showWarningModal} onClose={closeWarningModal} message={warningMessage} />
+    <WarningModal isOpen={showWarningModal} onClose={closeWarningModal} message={warningMessage}
+    />
   {/if}
 
   <ConfirmModal

@@ -12,6 +12,20 @@
       onOk();
       close(); // Optionally close the modal after OK is clicked
     }
+
+    function handleKeydown(event) {
+    if (event.key === 'Enter' && isOpen) {
+      close();
+    }
+  }
+
+  $: {
+  if (isOpen) {
+    window.addEventListener('keydown', handleKeydown);
+  } else {
+    window.removeEventListener('keydown', handleKeydown);
+  }
+}
   </script>
   
   {#if isOpen}
@@ -22,7 +36,7 @@
         <div class="flex justify-end space-x-2">
           <button
             class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
-            on:click={handleOk}
+            on:click={handleOk}        
           >
             OK
           </button>
