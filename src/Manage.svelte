@@ -4,7 +4,10 @@
   import { ArrowLeft } from 'lucide-svelte';
   import { Star, Star as StarOutline } from 'lucide-svelte';
   import { Pencil, X } from 'lucide-svelte'; // Import the pencil and cross icons
+  import Modal from './Modal.svelte';
 
+  let showWarningModal = false;
+  let warningMessage = '';
   let bookmarks = [];
   let categories = [];
   let newBookmark = { title: '', url: '', category: '' };
@@ -38,6 +41,16 @@
   }
 
   function addBookmark() {
+    if (newBookmark.title.length > 20) {
+      warningMessage = 'Bookmark title cannot be longer than 20 characters.';
+      showWarningModal = true;
+      return;
+    }
+    if (newBookmark.url.length > 50) {
+      warningMessage = 'Bookmark URL cannot be longer than 50 characters.';
+      showWarningModal = true;
+      return;
+    }
     if (newBookmark.title && newBookmark.url) {
       bookmarks = [...bookmarks, { ...newBookmark, id: Date.now(), favorite: false }];
       newBookmark = { title: '', url: '', category: '' };
@@ -46,11 +59,21 @@
   }
 
   function addCategory() {
+    if (newCategory.name.length > 20) {
+      warningMessage = 'Category name cannot be longer than 20 characters.';
+      showWarningModal = true;
+      return;
+    }
     if (newCategory.name) {
       categories = [...categories, { ...newCategory, id: Date.now() }];
       newCategory = { name: '' };
       saveCategories();
     }
+  }
+
+  function closeWarningModal() {
+    showWarningModal = false;
+    warningMessage = '';
   }
 
   function editBookmark(bookmark) {
@@ -451,5 +474,8 @@
         </button>
       </div>
     </div>
+  {/if}
+  {#if showWarningModal}
+    <Modal isOpen={showWarningModal} onClose={closeWarningModal} message={warningMessage} />
   {/if}
 </div>
