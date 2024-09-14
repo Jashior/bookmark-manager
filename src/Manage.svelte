@@ -2,9 +2,10 @@
   import { onMount } from 'svelte';
   import { navigate } from "svelte-routing";
   import { ArrowLeft } from 'lucide-svelte';
-  import { Star, Star as StarOutline, GripVertical } from 'lucide-svelte';
+  import { Star, Star as StarOutline, GripVertical, Search } from 'lucide-svelte';
   import { Pencil, X } from 'lucide-svelte'; // Import the pencil and cross icons
-  import Modal from './Modal.svelte';
+  import WarningModal from './WarningModal.svelte';
+  import ConfirmModal from './ConfirmModal.svelte';
 
   let showWarningModal = false;
   let warningMessage = '';
@@ -18,6 +19,8 @@
   let iconSize = 'small'; // Default icon size
   let draggedItem = null;
   let draggedOverItem = null;
+  let searchTerm = '';
+  let searchResults = [];
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -151,20 +154,40 @@
     saveBookmarks();
   }
 
+  let deleteAllBookMarksConfirmModalOpen = false;
+  function openBookMarksDeleteModal() {
+    deleteAllBookMarksConfirmModalOpen = true;
+  }
+  function closeBookMarksDeleteModal() {
+    deleteAllBookMarksConfirmModalOpen = false;
+  }
   function deleteAllBookmarks() {
-    if (confirm('Are you sure you want to delete all bookmarks?')) {
-      bookmarks = [];
-      saveBookmarks();
-    }
+    openBookMarksDeleteModal();
+  }
+  function handleBookMarksDeleteOk() {
+    // Handle the delete action
+    bookmarks = [];
+    saveBookmarks();
+    closeBookMarksDeleteModal(); // Close the modal after deleting
   }
 
+
+  let deleteAllCategoriesConfirmModalOpen = false;
+  function openCategoriesDeleteModal() {
+    deleteAllCategoriesConfirmModalOpen = true;
+  }
+  function closeCategoriesDeleteModal() {
+    deleteAllCategoriesConfirmModalOpen = false;
+  }
   function deleteAllCategories() {
-    if (confirm('Are you sure you want to delete all categories? This will also remove category assignments from all bookmarks.')) {
-      categories = [];
+    openCategoriesDeleteModal();
+  }
+  function handleCategoriesDeleteOk() {
+    categories = [];
       bookmarks = bookmarks.map(b => ({ ...b, category: '' }));
       saveCategories();
       saveBookmarks();
-    }
+    closeCategoriesDeleteModal(); // Close the modal after deleting
   }
 
   function toggleFavorite(id) {
@@ -212,6 +235,26 @@
     }
   }
 
+  $: {
+    if (activeTab === 'bookmarks') {
+      searchResults = searchTerm ? bookmarks.filter(bookmark =>
+        bookmark.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bookmark.url?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bookmark.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      ) : bookmarks;
+    } else if (activeTab === 'categories') {
+      searchResults = searchTerm ? categories.filter(category =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ) : categories;
+    }
+  }
+
+  function handleTabChange(tab) {
+    activeTab = tab;
+    searchTerm = '';
+    searchResults = [];
+  }
+
   function goToDashboard() {
     navigate("/");
   }
@@ -222,19 +265,19 @@
     <div class="flex items-center">
       <button
       class="px-4 py-2 rounded mr-2 {activeTab === 'bookmarks' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-      on:click={() => activeTab = 'bookmarks'}
+      on:click={() => handleTabChange('bookmarks')}
     >
       Bookmarks
     </button>
     <button
       class="px-4 py-2 rounded mr-2 {activeTab === 'categories' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-      on:click={() => activeTab = 'categories'}
+      on:click={() => handleTabChange('categories')}
     >
       Categories
     </button>
     <button
         class="px-4 py-2 rounded mr-2 {activeTab === 'config' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-        on:click={() => activeTab = 'config'}
+        on:click={() => handleTabChange('config')}
       >
         Config
     </button>
@@ -300,11 +343,17 @@
               >
                 Add
               </button>
+              <input
+                type="text"
+                placeholder="Search..."
+                bind:value={searchTerm}
+                class="border p-2 mr-2 ml-10 flex-grow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
               <button
               class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
               on:click={deleteAllBookmarks}
             >
-              Delete All Bookmarks
+              Delete All
             </button>
             </div>
           </div>
@@ -324,11 +373,17 @@
               >
                 Add
               </button>
+              <input
+              type="text"
+              placeholder="Search..."
+              bind:value={searchTerm}
+              class="border p-2 mr-2 ml-10 flex-grow bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
               <button
               class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
               on:click={deleteAllCategories}
             >
-              Delete All Categories
+              Delete All
             </button>
             </div>
           </div>
@@ -354,9 +409,8 @@
       <div class="flex-1 overflow-y-auto">
         {#if activeTab === 'bookmarks'}
           <div class="mb-4">
-            <h2 class="text-xl font-semibold mb-2">Bookmarks</h2>
             <table class="w-full">
-              <thead>
+              <thead class="sticky top-0 bg-white dark:bg-gray-800">
                 <tr>
                   <th class="text-left">No.</th>
                   <th class="text-left">Favorite</th>
@@ -367,7 +421,7 @@
                 </tr>
               </thead>
               <tbody on:drop|preventDefault={(event) => handleDrop(event, 'bookmarks')}>
-                {#each bookmarks as bookmark, index (bookmark.id)}
+                {#each (searchTerm ? searchResults : bookmarks) as bookmark, index (bookmark.id)}
                   <tr
                     class="hover:bg-gray-100 dark:hover:bg-gray-700"
                     draggable={true}
@@ -412,7 +466,7 @@
           <div class="mb-4">
             <h2 class="text-xl font-semibold mb-2">Categories</h2>
             <table class="w-full">
-              <thead>
+              <thead class="sticky top-0 bg-white dark:bg-gray-800">
                 <tr>
                   <th class="text-left">No.</th>
                   <th class="text-left">Name</th>
@@ -420,7 +474,7 @@
                 </tr>
               </thead>
               <tbody on:drop|preventDefault={(event) => handleDrop(event, 'categories')}>
-                {#each categories as category, index (category.id)}
+                {#each (searchTerm ? searchResults : categories) as category, index (category.id)}
                   <tr
                     class="hover:bg-gray-100 dark:hover:bg-gray-700"
                     draggable={true}
@@ -457,21 +511,28 @@
   </div>
 
   {#if editingBookmark}
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-      <div class="bg-white dark:bg-gray-800 p-4 rounded">
-        <h2 class="text-xl font-semibold mb-2">Edit Bookmark</h2>
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded w-[800px]"> <!-- Adjusted width here -->
+      <h2 class="text-xl font-semibold mb-2">Edit Bookmark</h2>
+      <div class="mb-2">
         <input
-          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          class="border p-2 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           type="text"
           bind:value={editingBookmark.title}
+          placeholder="Title"
         />
+      </div>
+      <div class="mb-2">
         <input
-          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          class="border p-2 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           type="text"
           bind:value={editingBookmark.url}
+          placeholder="URL"
         />
+      </div>
+      <div class="mb-4">
         <select
-          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          class="border p-2 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           bind:value={editingBookmark.category}
         >
           <option value="">No Category</option>
@@ -479,8 +540,10 @@
             <option value={category.name}>{category.name}</option>
           {/each}
         </select>
+      </div>
+      <div class="flex justify-end space-x-2">
         <button
-          class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition-colors duration-200"
+          class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors duration-200"
           on:click={updateBookmark}
         >
           Save
@@ -493,33 +556,52 @@
         </button>
       </div>
     </div>
-  {/if}
+  </div>
+{/if}
 
   {#if editingCategory}
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
       <div class="bg-white dark:bg-gray-800 p-4 rounded">
         <h2 class="text-xl font-semibold mb-2">Edit Category</h2>
         <input
-          class="border p-2 mr-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          class="border p-2 mb-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           type="text"
           bind:value={editingCategory.name}
         />
-        <button
-          class="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600 transition-colors duration-200"
-          on:click={updateCategory}
-        >
-          Save
-        </button>
-        <button
-          class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200"
-          on:click={() => editingCategory = null}
-        >
-          Cancel
-        </button>
+        <div class="flex justify-end space-x-2">
+          <button
+            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors duration-200"
+            on:click={updateCategory}
+          >
+            Save
+          </button>
+          <button
+            class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-200"
+            on:click={() => editingCategory = null}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   {/if}
+
   {#if showWarningModal}
-    <Modal isOpen={showWarningModal} onClose={closeWarningModal} message={warningMessage} />
+    <WarningModal isOpen={showWarningModal} onClose={closeWarningModal} message={warningMessage} />
   {/if}
+
+  <ConfirmModal
+    isOpen={deleteAllBookMarksConfirmModalOpen}
+    onClose={closeBookMarksDeleteModal}
+    onOk={handleBookMarksDeleteOk}
+    message="Are you sure you want to delete all bookmarks?"
+  />
+
+
+  <ConfirmModal
+  isOpen={deleteAllCategoriesConfirmModalOpen}
+  onClose={closeCategoriesDeleteModal}
+  onOk={handleCategoriesDeleteOk}
+  message="Are you sure you want to delete all bookmarks?"
+/>
 </div>
