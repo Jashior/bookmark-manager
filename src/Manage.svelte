@@ -137,164 +137,189 @@
   }
 </script>
 
-<div class="p-4">
-  <button
-    on:click={goToDashboard}
-    class="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-  >
-    <ArrowLeft size={24} />
-  </button>
-
-  <h1 class="text-3xl font-bold mb-4">Manage Bookmarks</h1>
-
-  <div class="mb-4">
-    <button
-      class="px-4 py-2 rounded mr-2 {activeTab === 'bookmarks' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-      on:click={() => activeTab = 'bookmarks'}
-    >
-      Bookmarks
-    </button>
-    <button
-      class="px-4 py-2 rounded {activeTab === 'categories' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-      on:click={() => activeTab = 'categories'}
-    >
-      Categories
-    </button>
-  </div>
-
-  {#if activeTab === 'bookmarks'}
-    <div class="mb-4">
-      <h2 class="text-xl font-semibold mb-2">Add Bookmark</h2>
-      <input
-        class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        type="text"
-        placeholder="Title"
-        bind:value={newBookmark.title}
-      />
-      <input
-        class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        type="text"
-        placeholder="URL"
-        bind:value={newBookmark.url}
-      />
-      <select
-        class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        bind:value={newBookmark.category}
+<div class="h-screen flex flex-col">
+  <div class="p-4 flex justify-between items-center bg-white dark:bg-gray-800 shadow-md">
+    <h1 class="text-3xl font-bold">Manage Bookmarks</h1>
+    <div class="flex items-center">
+      <button
+        class="bg-purple-500 text-white px-4 py-2 rounded mr-2 hover:bg-purple-600 transition-colors duration-200"
+        on:click={exportData}
       >
-        <option value="">No Category</option>
-        {#each categories as category}
-        <option value={category.name}>{category.name}</option>
-      {/each}
-    </select>
-    <button
-      class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
-      on:click={addBookmark}
-    >
-      Add
-    </button>
+        Export
+      </button>
+      <label class="bg-green-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-green-600 transition-colors duration-200 mr-2">
+        Import
+        <input
+          type="file"
+          accept=".json"
+          on:change={importData}
+          class="hidden"
+        />
+      </label>
+      <button
+        on:click={goToDashboard}
+        class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+      >
+        <ArrowLeft size={24} />
+      </button>
+    </div>
   </div>
 
-  <div class="mb-4">
-    <h2 class="text-xl font-semibold mb-2">Bookmarks</h2>
-    <table class="w-full">
-      <thead>
-        <tr>
-          <th class="text-left">Title</th>
-          <th class="text-left">URL</th>
-          <th class="text-left">Category</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each bookmarks as bookmark (bookmark.id)}
-          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <td>{bookmark.title}</td>
-            <td><a href={bookmark.url} target="_blank" class="text-blue-500 dark:text-blue-400 hover:underline">{bookmark.url}</a></td>
-            <td>{bookmark.category || 'Uncategorized'}</td>
-            <td>
-              <button
-                class="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600 transition-colors duration-200"
-                on:click={() => editBookmark(bookmark)}
+  <div class="flex-1 overflow-hidden">
+    <div class="p-4 flex flex-col h-full">
+      <div class="mb-4">
+        <button
+          class="px-4 py-2 rounded mr-2 {activeTab === 'bookmarks' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+          on:click={() => activeTab = 'bookmarks'}
+        >
+          Bookmarks
+        </button>
+        <button
+          class="px-4 py-2 rounded {activeTab === 'categories' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+          on:click={() => activeTab = 'categories'}
+        >
+          Categories
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto">
+        {#if activeTab === 'bookmarks'}
+          <div class="mb-4 flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-semibold mb-2">Add Bookmark</h2>
+              <input
+                class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                type="text"
+                placeholder="Title"
+                bind:value={newBookmark.title}
+              />
+              <input
+                class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                type="text"
+                placeholder="URL"
+                bind:value={newBookmark.url}
+              />
+              <select
+                class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                bind:value={newBookmark.category}
               >
-                Edit
-              </button>
+                <option value="">No Category</option>
+                {#each categories as category}
+                  <option value={category.name}>{category.name}</option>
+                {/each}
+              </select>
               <button
-                class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors duration-200"
-                on:click={() => deleteBookmark(bookmark.id)}
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
+                on:click={addBookmark}
               >
-                Delete
+                Add
               </button>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+            </div>
+            <button
+              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
+              on:click={deleteAllBookmarks}
+            >
+              Delete All Bookmarks
+            </button>
+          </div>
+
+          <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Bookmarks</h2>
+            <table class="w-full">
+              <thead>
+                <tr>
+                  <th class="text-left">Title</th>
+                  <th class="text-left">URL</th>
+                  <th class="text-left">Category</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each bookmarks as bookmark (bookmark.id)}
+                  <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <td>{bookmark.title}</td>
+                    <td><a href={bookmark.url} target="_blank" class="text-blue-500 dark:text-blue-400 hover:underline">{bookmark.url}</a></td>
+                    <td>{bookmark.category || 'Uncategorized'}</td>
+                    <td>
+                      <button
+                        class="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600 transition-colors duration-200"
+                        on:click={() => editBookmark(bookmark)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors duration-200"
+                        on:click={() => deleteBookmark(bookmark.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {:else}
+          <div class="mb-4 flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-semibold mb-2">Add Category</h2>
+              <input
+                class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                type="text"
+                placeholder="Category Name"
+                bind:value={newCategory.name}
+              />
+              <button
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
+                on:click={addCategory}
+              >
+                Add
+              </button>
+            </div>
+            <button
+              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
+              on:click={deleteAllCategories}
+            >
+              Delete All Categories
+            </button>
+          </div>
+
+          <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Categories</h2>
+            <table class="w-full">
+              <thead>
+                <tr>
+                  <th class="text-left">Name</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each categories as category (category.id)}
+                  <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <td>{category.name}</td>
+                    <td>
+                      <button
+                        class="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600 transition-colors duration-200"
+                        on:click={() => editCategory(category)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors duration-200"
+                        on:click={() => deleteCategory(category.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      </div>
+    </div>
   </div>
-
-  <button
-    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
-    on:click={deleteAllBookmarks}
-  >
-    Delete All Bookmarks
-  </button>
-{:else}
-  <div class="mb-4">
-    <h2 class="text-xl font-semibold mb-2">Add Category</h2>
-    <input
-      class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-      type="text"
-      placeholder="Category Name"
-      bind:value={newCategory.name}
-    />
-    <button
-      class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
-      on:click={addCategory}
-    >
-      Add
-    </button>
-  </div>
-
-  <div class="mb-4">
-    <h2 class="text-xl font-semibold mb-2">Categories</h2>
-    <table class="w-full">
-      <thead>
-        <tr>
-          <th class="text-left">Name</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each categories as category (category.id)}
-          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <td>{category.name}</td>
-            <td>
-              <button
-                class="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600 transition-colors duration-200"
-                on:click={() => editCategory(category)}
-              >
-                Edit
-              </button>
-              <button
-                class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors duration-200"
-                on:click={() => deleteCategory(category.id)}
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
-
-  <button
-    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
-    on:click={deleteAllCategories}
-  >
-    Delete All Categories
-  </button>
-{/if}
-
 {#if editingBookmark}
   <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
     <div class="bg-white dark:bg-gray-800 p-4 rounded">
@@ -358,22 +383,4 @@
     </div>
   </div>
 {/if}
-
-<div class="mt-4">
-  <button
-    class="bg-purple-500 text-white px-4 py-2 rounded mr-2 hover:bg-purple-600 transition-colors duration-200"
-    on:click={exportData}
-  >
-    Export
-  </button>
-  <label class="bg-green-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-green-600 transition-colors duration-200">
-    Import
-    <input
-      type="file"
-      accept=".json"
-      on:change={importData}
-      class="hidden"
-    />
-  </label>
-</div>
 </div>

@@ -26,15 +26,15 @@
     if (searchInput) searchInput.focus();
   });
 
-  function layoutBookmarks() {
-    const padding = 20;
-    const bookmarkWidth = 120;
-    const bookmarkHeight = 120;
-    const containerWidth = window.innerWidth - padding * 2;
-    const containerHeight = window.innerHeight - padding * 2;
+  let containerWidth;
+  let containerHeight;
 
-    const columns = Math.floor(containerWidth / bookmarkWidth);
-    const rows = Math.floor(containerHeight / bookmarkHeight);
+  function layoutBookmarks() {
+    const padding = 10;
+    const bookmarkWidth = 100;
+    const bookmarkHeight = 100;
+    const columns = Math.floor((containerWidth - padding * 2) / bookmarkWidth);
+    const rows = Math.floor((containerHeight - padding * 2) / bookmarkHeight);
 
     bookmarks = bookmarks.map((bookmark, index) => {
       const col = index % columns;
@@ -92,9 +92,9 @@
   $: highlightedBookmark = filteredBookmarks.length === 1 ? filteredBookmarks[0] : null;
 
   $: groupedBookmarks = categories.reduce((acc, category) => {
-    acc[category.name] = bookmarks.filter(bookmark => bookmark.category === category.name);
+    acc[category.name] = filteredBookmarks.filter(bookmark => bookmark.category === category.name);
     return acc;
-  }, { 'Uncategorized': bookmarks.filter(bookmark => !bookmark.category) });
+  }, { 'Uncategorized': filteredBookmarks.filter(bookmark => !bookmark.category) });
 </script>
 
 <svelte:window on:resize={layoutBookmarks} on:keydown={handleKeydown}/>
@@ -136,14 +136,14 @@
     {/if}
   </div>
 
-  <div class="relative w-full h-full">
+  <div class="relative w-full h-full" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
     {#if displayMode === 'grid'}
       {#each filteredBookmarks as bookmark (bookmark.id)}
         <a
           href={bookmark.url}
           target="_blank"
           rel="noopener noreferrer"
-          class="absolute w-24 h-24 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110 hover:z-10 {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''}"
+          class="absolute w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110 hover:z-10 {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''}"
           style="left: {bookmark.left}px; top: {bookmark.top}px;"
           in:fade={{duration: 300}}
           out:scale={{duration: 300}}
@@ -151,7 +151,7 @@
           <img
             src={getFaviconUrl(bookmark.url)}
             alt={bookmark.title}
-            class="w-12 h-12 mb-2"
+            class="w-10 h-10 mb-1"
             on:load={(e) => {
               const color = colorThief.getColor(e.target);
               e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
@@ -162,33 +162,35 @@
         </a>
       {/each}
     {:else}
-      {#each Object.entries(groupedBookmarks) as [category, bookmarks]}
-        <div class="mb-4">
-          <h2 class="text-xl font-semibold mb-2">{category}</h2>
-          <div class="grid grid-cols-4 gap-4">
-            {#each bookmarks as bookmark (bookmark.id)}
-              <a
-                href={bookmark.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="w-24 h-24 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110"
-              >
-                <img
-                  src={getFaviconUrl(bookmark.url)}
-                  alt={bookmark.title}
-                  class="w-12 h-12 mb-2"
-                  on:load={(e) => {
-                    const color = colorThief.getColor(e.target);
-                    e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
-                    e.target.closest('a').style.color = colorThief.getContrastingColor(color);
-                  }}
-                />
-                <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
-              </a>
-            {/each}
+      <div class="overflow-y-auto h-full">
+        {#each Object.entries(groupedBookmarks) as [category, bookmarks]}
+          <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">{category}</h2>
+            <div class="grid grid-cols-10 gap-2">
+              {#each bookmarks as bookmark (bookmark.id)}
+                <a
+                  href={bookmark.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110  {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''}"
+                >
+                  <img
+                    src={getFaviconUrl(bookmark.url)}
+                    alt={bookmark.title}
+                    class="w-10 h-10 mb-1"
+                    on:load={(e) => {
+                      const color = colorThief.getColor(e.target);
+                      e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
+                      e.target.closest('a').style.color = colorThief.getContrastingColor(color);
+                    }}
+                  />
+                  <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
+                </a>
+              {/each}
+            </div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      </div>
     {/if}
   </div>
 
