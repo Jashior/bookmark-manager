@@ -180,9 +180,6 @@
         >
           Categories
         </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto">
         {#if activeTab === 'bookmarks'}
           <div class="mb-4 flex justify-between items-center">
             <div>
@@ -214,15 +211,43 @@
               >
                 Add
               </button>
-            </div>
-            <button
+              <button
               class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
               on:click={deleteAllBookmarks}
             >
               Delete All Bookmarks
             </button>
+            </div>
           </div>
+        {:else}
+          <div class="mb-4 flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-semibold mb-2">Add Category</h2>
+              <input
+                class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                type="text"
+                placeholder="Category Name"
+                bind:value={newCategory.name}
+              />
+              <button
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
+                on:click={addCategory}
+              >
+                Add
+              </button>
+              <button
+              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
+              on:click={deleteAllCategories}
+            >
+              Delete All Categories
+            </button>
+            </div>
+          </div>
+        {/if}
+      </div>
 
+      <div class="flex-1 overflow-y-auto">
+        {#if activeTab === 'bookmarks'}
           <div class="mb-4">
             <h2 class="text-xl font-semibold mb-2">Bookmarks</h2>
             <table class="w-full">
@@ -260,30 +285,6 @@
             </table>
           </div>
         {:else}
-          <div class="mb-4 flex justify-between items-center">
-            <div>
-              <h2 class="text-xl font-semibold mb-2">Add Category</h2>
-              <input
-                class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                type="text"
-                placeholder="Category Name"
-                bind:value={newCategory.name}
-              />
-              <button
-                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
-                on:click={addCategory}
-              >
-                Add
-              </button>
-            </div>
-            <button
-              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-200"
-              on:click={deleteAllCategories}
-            >
-              Delete All Categories
-            </button>
-          </div>
-
           <div class="mb-4">
             <h2 class="text-xl font-semibold mb-2">Categories</h2>
             <table class="w-full">
