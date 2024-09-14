@@ -1,18 +1,20 @@
 <script>
   import { onMount } from 'svelte';
   import { navigate } from "svelte-routing";
-  import { Cog, Moon, Sun, Search, X, Grid, List } from 'lucide-svelte';
+  import { Cog, Moon, Sun, Search, X, ChevronDown } from 'lucide-svelte';
   import { fade, scale } from 'svelte/transition';
   import { colorThief } from './colorThief.js';
-  import { darkMode, bookmarks as bookmarksStore } from './store.js';
+  import { darkMode, bookmarks as bookmarksStore, categories as categoriesStore } from './store.js';
 
   let bookmarks = [];
+  let filteredBookmarks = [];
   let categories = [];
   let searchTerm = '';
   let searchInput;
   let highlightedBookmark = null;
   let draggedBookmark = null;
   let dropTarget = null;
+  let selectedCategory = 'All';
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -25,10 +27,30 @@
       categories = JSON.parse(storedCategories);
     }
     if (searchInput) searchInput.focus();
+
+    // Add event listener for window resize
+    window.addEventListener('resize', handleResize);
+    
+    // Initial layout
+    handleResize();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   });
 
   let containerWidth;
   let containerHeight;
+
+  function handleResize() {
+    // Use setTimeout to ensure the new dimensions are captured
+    setTimeout(() => {
+      containerWidth = window.innerWidth;
+      containerHeight = window.innerHeight;
+      layoutBookmarks();
+    }, 0);
+  }
 
   function layoutBookmarks() {
     const padding = 10;
@@ -37,14 +59,16 @@
     const columns = Math.floor((containerWidth - padding * 2) / bookmarkWidth);
     const rows = Math.floor((containerHeight - padding * 2) / bookmarkHeight);
 
-    bookmarks = bookmarks.map((bookmark, index) => {
+    // Update the layout for filteredBookmarks instead of the global bookmarks array
+    filteredBookmarks = filteredBookmarks?.map((bookmark, index) => {
       const col = index % columns;
-      const row = Math.floor(index / columns) % rows;
+      const row = Math.floor(index / columns);
       const left = padding + col * bookmarkWidth;
       const top = padding + row * bookmarkHeight;
       return { ...bookmark, left, top, index };
     });
-  }
+}
+
 
   function getFaviconUrl(url) {
     try {
@@ -115,15 +139,24 @@
     dropTarget = null;
   }
 
-  $: filteredBookmarks = bookmarks.filter(bookmark => 
-    bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bookmark.url.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  $: {
+    filteredBookmarks = bookmarks.filter(bookmark => 
+      (selectedCategory === 'All' || 
+      bookmark.category === selectedCategory || 
+      (!bookmark.category && selectedCategory === 'Uncategorized')) &&
+      (bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bookmark.url.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    
+    // Call layoutBookmarks after filteredBookmarks update
+    layoutBookmarks();
+}
+
 
   $: highlightedBookmark = filteredBookmarks.length === 1 ? filteredBookmarks[0] : null;
 </script>
 
-<svelte:window on:resize={layoutBookmarks} on:keydown={handleKeydown}/>
+<svelte:window on:resize={handleResize} on:keydown={handleKeydown}/>
 
 <div class="relative h-screen p-5 flex flex-col justify-center items-center">
   <button
@@ -144,7 +177,7 @@
     <Cog size={24} />
   </button>
 
-  <div class="relative mb-8">
+  <div class="relative mb-4">
     <input
       bind:this={searchInput}
       bind:value={searchTerm}
@@ -162,13 +195,27 @@
     {/if}
   </div>
 
+  <div class="relative mb-4">
+    <select
+      bind:value={selectedCategory}
+      class="pl-4 pr-10 py-2 rounded-full bg-gray-100 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+    >
+      <option value="All">All Categories</option>
+      <option value="Uncategorized">Uncategorized</option>
+      {#each categories as category}
+        <option value={category.name}>{category.name}</option>
+      {/each}
+    </select>
+    <ChevronDown size={20} class="absolute right-3 top-2 text-gray-400 pointer-events-none" />
+  </div>
+
   <div class="relative w-full h-full" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
     {#each filteredBookmarks as bookmark (bookmark.id)}
       <a
         href={bookmark.url}
         target="_blank"
         rel="noopener noreferrer"
-        class="absolute w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110 hover:z-10 {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''} {dropTarget && dropTarget.id === bookmark.id ? 'border-2 border-blue-500' : ''}"
+        class="absolute w-20 h-20 rounded-lg shadow-lg flex flex-col items-center justify-center p-2 transition-all duration-300 hover:scale-110 hover:z-10 {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''} {dropTarget && dropTarget.id === bookmark.id ? 'border-2 border-blue-500' : ''} dark:shadow-lg dark:shadow-gray-800"
         style="left: {bookmark.left}px; top: {bookmark.top}px;"
         in:fade={{duration: 300}}
         out:scale={{duration: 300}}
@@ -191,5 +238,5 @@
         <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
       </a>
     {/each}
-</div>
+  </div>
 </div>
