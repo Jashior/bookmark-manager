@@ -11,3 +11,14 @@ darkMode.subscribe(value => {
     document.documentElement.classList.remove('dark');
   }
 });
+
+export const bookmarks = writable(JSON.parse(localStorage.getItem('bookmarks') || '[]'));
+export const categories = writable(JSON.parse(localStorage.getItem('categories') || '[]'));
+
+bookmarks.subscribe(value => {
+  localStorage.setItem('bookmarks', JSON.stringify(value));
+});
+
+categories.subscribe(value => {
+  localStorage.setItem('categories', JSON.stringify(value));
+});
