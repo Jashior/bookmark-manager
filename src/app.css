@@ -5,3 +5,13 @@
 :root {
   color-scheme: light dark;
 }
+
+/* Ensure no unwanted focus styles */
+:focus {
+  outline: none; /* Remove default focus outline */
+}
+
+/* You may also want to reset user-select if you're preventing user interaction */
+body, html {
+  user-select: none; /* Prevent text selection */
+}

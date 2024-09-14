@@ -5,6 +5,7 @@
   import { fade, scale } from 'svelte/transition';
   import { colorThief } from './colorThief.js';
   import { darkMode, bookmarks as bookmarksStore, categories as categoriesStore } from './store.js';
+  import { Star, Star as StarOutline } from 'lucide-svelte';
 
   let bookmarks = [];
   let filteredBookmarks = [];
@@ -111,36 +112,51 @@
     draggedBookmark = bookmark;
     event.dataTransfer.setData('text/plain', bookmark.id);
     event.dataTransfer.effectAllowed = 'move';
+    document.body.style.cursor = 'move'; // Set the cursor to move when dragging
   }
 
   function handleDragOver(event, bookmark) {
-    event.preventDefault();
-    if (bookmark !== draggedBookmark) {
-      dropTarget = bookmark;
-    }
+  event.preventDefault();
+  
+  if (
+    ((draggedBookmark && draggedBookmark.favorite) && (bookmark && !bookmark.favorite)) || 
+    ((draggedBookmark && !draggedBookmark.favorite) && (bookmark && bookmark.favorite))
+  ) {
+    // Set cursor to not-allowed if swapping with non-favorite
+    event.dataTransfer.dropEffect = 'none'; 
+    document.body.style.cursor = 'not-allowed';
+  } else {
+    // Allow dropping
+    event.dataTransfer.dropEffect = 'move'; 
+    document.body.style.cursor = 'move';
+    dropTarget = bookmark;
   }
+}
 
-  function handleDragLeave() {
-    dropTarget = null;
-  }
+function handleDragLeave() {
+  document.body.style.cursor = ''; // Reset cursor when leaving the drop target
+  dropTarget = null;
+}
 
-  function handleDrop(event) {
-    event.preventDefault();
-    if (draggedBookmark && dropTarget && draggedBookmark !== dropTarget) {
-      const draggedIndex = bookmarks.findIndex(b => b.id === draggedBookmark.id);
-      const targetIndex = bookmarks.findIndex(b => b.id === dropTarget.id);
-      
-      bookmarks = bookmarks.filter(b => b.id !== draggedBookmark.id);
-      bookmarks.splice(targetIndex, 0, draggedBookmark);
-      
-      bookmarks = bookmarks.map((bookmark, index) => ({ ...bookmark, index }));
-      
-      layoutBookmarks();
-      bookmarksStore.set(bookmarks);
-    }
-    draggedBookmark = null;
-    dropTarget = null;
+function handleDrop(event) {
+  event.preventDefault();
+
+  if (draggedBookmark && dropTarget && draggedBookmark !== dropTarget) {
+    const draggedIndex = bookmarks.findIndex(b => b.id === draggedBookmark.id);
+    const targetIndex = bookmarks.findIndex(b => b.id === dropTarget.id);
+    
+    bookmarks = bookmarks.filter(b => b.id !== draggedBookmark.id);
+    bookmarks.splice(targetIndex, 0, draggedBookmark);
+    
+    bookmarks = bookmarks.map((bookmark, index) => ({ ...bookmark, index }));
+    
+    layoutBookmarks();
+    bookmarksStore.set(bookmarks);
   }
+  draggedBookmark = null;
+  dropTarget = null;
+  document.body.style.cursor = ''; // Reset cursor
+}
 
   function handleScroll(event) {
     if (event.deltaY < 0) {
@@ -162,16 +178,16 @@
   }
 
   $: {
-    filteredBookmarks = bookmarks.filter(bookmark => 
-      (selectedCategory === 'All' || 
-      bookmark.category === selectedCategory) &&
+  filteredBookmarks = bookmarks
+    .filter(bookmark =>
+      (selectedCategory === 'All' || bookmark.category === selectedCategory) &&
       (bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bookmark.url.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    
-    // Call layoutBookmarks after filteredBookmarks update
-    layoutBookmarks();
-  }
+    )
+    .sort((a, b) => b.favorite - a.favorite); // Sort so that favorited bookmarks appear first
+  
+  layoutBookmarks();
+}
 
   function selectCategory(index) {
     if (index === 0) {
@@ -270,18 +286,21 @@
         on:dragleave={handleDragLeave}
         on:drop={handleDrop}
       >
-        <img
-          src={getFaviconUrl(bookmark.url)}
-          alt={bookmark.title}
-          class="w-10 h-10 mb-1"
-          on:load={(e) => {
-            const color = colorThief.getColor(e.target);
-            e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
-            e.target.closest('a').style.color = colorThief.getContrastingColor(color);
-          }}
-        />
-        <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
-      </a>
+      <img
+        src={getFaviconUrl(bookmark.url)}
+        alt={bookmark.title}
+        class="w-10 h-10 mb-1"
+        on:load={(e) => {
+          const color = colorThief.getColor(e.target);
+          e.target.closest('a').style.backgroundColor = `rgb(${color.join(',')})`;
+          e.target.closest('a').style.color = colorThief.getContrastingColor(color);
+        }}
+      />
+      {#if bookmark.favorite}
+        <Star size={16} class="fill-current absolute top-1 right-1 text-yellow-500" />
+      {/if}
+      <span class="text-xs text-center overflow-hidden overflow-ellipsis">{bookmark.title}</span>
+    </a>
     {/each}
   </div>
 </div>

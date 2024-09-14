@@ -3,6 +3,7 @@
   import { navigate } from "svelte-routing";
   import { ArrowLeft } from 'lucide-svelte';
   import { darkMode } from './store.js';
+  import { Star, Star as StarOutline } from 'lucide-svelte';
 
   let bookmarks = [];
   let categories = [];
@@ -33,7 +34,7 @@
 
   function addBookmark() {
     if (newBookmark.title && newBookmark.url) {
-      bookmarks = [...bookmarks, { ...newBookmark, id: Date.now() }];
+      bookmarks = [...bookmarks, { ...newBookmark, id: Date.now(), favorite: false }];
       newBookmark = { title: '', url: '', category: '' };
       saveBookmarks();
     }
@@ -98,6 +99,14 @@
       saveBookmarks();
     }
   }
+
+  function toggleFavorite(id) {
+  bookmarks = bookmarks.map(b =>
+    b.id === id ? { ...b, favorite: !b.favorite } : b
+  );
+  saveBookmarks();
+}
+
 
   function exportData() {
     const data = {
@@ -257,6 +266,7 @@
               <thead>
                 <tr>
                   <th class="text-left">No.</th>
+                  <th class="text-left">Favorite</th>
                   <th class="text-left">Title</th>
                   <th class="text-left">URL</th>
                   <th class="text-left">Category</th>
@@ -267,6 +277,18 @@
                 {#each bookmarks as bookmark, index (bookmark.id)}
                   <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
                     <td>{index + 1}</td>
+                    <td>
+                      <button
+                        class="text-yellow-500 dark:text-yellow-400"
+                        on:click={() => toggleFavorite(bookmark.id)}
+                      >
+                        {#if bookmark.favorite}
+                          <Star size={24} class="fill-current" />
+                        {:else}
+                          <Star size={24} class="stroke-current" />
+                        {/if}
+                      </button>
+                    </td>
                     <td>{bookmark.title}</td>
                     <td><a href={bookmark.url} target="_blank" class="text-blue-500 dark:text-blue-400 hover:underline">{bookmark.url}</a></td>
                     <td>{bookmark.category || 'Uncategorized'}</td>
