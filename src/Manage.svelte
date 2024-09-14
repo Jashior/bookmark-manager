@@ -139,7 +139,22 @@
 
 <div class="h-screen flex flex-col">
   <div class="p-4 flex justify-between items-center bg-white dark:bg-gray-800 shadow-md">
-    <h1 class="text-3xl font-bold">Manage Bookmarks</h1>
+    <div class="flex items-center">
+      <button
+      class="px-4 py-2 rounded mr-2 {activeTab === 'bookmarks' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+      on:click={() => activeTab = 'bookmarks'}
+    >
+      Bookmarks
+    </button>
+    <button
+      class="px-4 py-2 rounded mr-2 {activeTab === 'categories' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+      on:click={() => activeTab = 'categories'}
+    >
+      Categories
+    </button>
+    </div>
+    <h1 class="text-3xl font-bold">Bookmarks Manager</h1>
+
     <div class="flex items-center">
       <button
         class="bg-purple-500 text-white px-4 py-2 rounded mr-2 hover:bg-purple-600 transition-colors duration-200"
@@ -168,18 +183,6 @@
   <div class="flex-1 overflow-hidden">
     <div class="p-4 flex flex-col h-full">
       <div class="mb-4">
-        <button
-          class="px-4 py-2 rounded mr-2 {activeTab === 'bookmarks' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-          on:click={() => activeTab = 'bookmarks'}
-        >
-          Bookmarks
-        </button>
-        <button
-          class="px-4 py-2 rounded {activeTab === 'categories' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-          on:click={() => activeTab = 'categories'}
-        >
-          Categories
-        </button>
         {#if activeTab === 'bookmarks'}
           <div class="mb-4 flex justify-between items-center">
             <div>

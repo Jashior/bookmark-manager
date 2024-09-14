@@ -15,6 +15,7 @@
   let draggedBookmark = null;
   let dropTarget = null;
   let selectedCategory = 'All';
+  let currentCategoryIndex = 0;
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -30,13 +31,16 @@
 
     // Add event listener for window resize
     window.addEventListener('resize', handleResize);
-    
+    // Add wheel event listener for mouse scroll
+    window.addEventListener('wheel', handleScroll);
+
     // Initial layout
     handleResize();
 
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('wheel', handleScroll);
     };
   });
 
@@ -138,11 +142,29 @@
     dropTarget = null;
   }
 
+  function handleScroll(event) {
+    if (event.deltaY < 0) {
+      // Scroll up, move to previous category
+      currentCategoryIndex--;
+    } else if (event.deltaY > 0) {
+      // Scroll down, move to next category
+      currentCategoryIndex++;
+    }
+
+    // Wrap around logic for cycling
+    if (currentCategoryIndex < 0) {
+      currentCategoryIndex = categories.length; // Wrap to "All"
+    } else if (currentCategoryIndex > categories.length) {
+      currentCategoryIndex = 0; // Wrap to "All"
+    }
+
+    selectCategory(currentCategoryIndex);
+  }
+
   $: {
     filteredBookmarks = bookmarks.filter(bookmark => 
       (selectedCategory === 'All' || 
-      bookmark.category === selectedCategory || 
-      (!bookmark.category && selectedCategory === 'Uncategorized')) &&
+      bookmark.category === selectedCategory) &&
       (bookmark.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bookmark.url.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -151,8 +173,12 @@
     layoutBookmarks();
   }
 
-  function selectCategory(category) {
-    selectedCategory = category;
+  function selectCategory(index) {
+    if (index === 0) {
+      selectedCategory = 'All';
+    } else {
+      selectedCategory = categories[index - 1].name;
+    }
   }
 
   $: highlightedBookmark = filteredBookmarks.length === 1 ? filteredBookmarks[0] : null;
@@ -210,19 +236,6 @@
       on:click={() => selectCategory('All')}
     >
       All Categories
-    </button>
-    <button
-      class="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200
-      hover:bg-blue-400 hover:text-white
-      dark:hover:bg-blue-600 dark:hover:text-white
-      focus:outline-none focus:ring-2 focus:ring-blue-500 
-      dark:focus:ring-blue-400
-      {selectedCategory === 'Uncategorized' 
-        ? 'bg-blue-500 text-white dark:bg-blue-600' 
-        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}"  
-      on:click={() => selectCategory('Uncategorized')}
-    >
-      Uncategorized
     </button>
     {#each categories as category}
       <button
