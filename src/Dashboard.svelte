@@ -59,7 +59,6 @@
     const columns = Math.floor((containerWidth - padding * 2) / bookmarkWidth);
     const rows = Math.floor((containerHeight - padding * 2) / bookmarkHeight);
 
-    // Update the layout for filteredBookmarks instead of the global bookmarks array
     filteredBookmarks = filteredBookmarks?.map((bookmark, index) => {
       const col = index % columns;
       const row = Math.floor(index / columns);
@@ -150,8 +149,11 @@
     
     // Call layoutBookmarks after filteredBookmarks update
     layoutBookmarks();
-}
+  }
 
+  function selectCategory(category) {
+    selectedCategory = category;
+  }
 
   $: highlightedBookmark = filteredBookmarks.length === 1 ? filteredBookmarks[0] : null;
 </script>
@@ -195,18 +197,48 @@
     {/if}
   </div>
 
-  <div class="relative mb-4">
-    <select
-      bind:value={selectedCategory}
-      class="pl-4 pr-10 py-2 rounded-full bg-gray-100 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+  <div class="flex flex-wrap gap-2 mb-4">
+    <button
+      class="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200
+      hover:bg-blue-400 hover:text-white
+      dark:hover:bg-blue-600 dark:hover:text-white
+      focus:outline-none focus:ring-2 focus:ring-blue-500 
+      dark:focus:ring-blue-400
+      {selectedCategory === 'All' 
+        ? 'bg-blue-500 text-white dark:bg-blue-600' 
+        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}"  
+      on:click={() => selectCategory('All')}
     >
-      <option value="All">All Categories</option>
-      <option value="Uncategorized">Uncategorized</option>
-      {#each categories as category}
-        <option value={category.name}>{category.name}</option>
-      {/each}
-    </select>
-    <ChevronDown size={20} class="absolute right-3 top-2 text-gray-400 pointer-events-none" />
+      All Categories
+    </button>
+    <button
+      class="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200
+      hover:bg-blue-400 hover:text-white
+      dark:hover:bg-blue-600 dark:hover:text-white
+      focus:outline-none focus:ring-2 focus:ring-blue-500 
+      dark:focus:ring-blue-400
+      {selectedCategory === 'Uncategorized' 
+        ? 'bg-blue-500 text-white dark:bg-blue-600' 
+        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}"  
+      on:click={() => selectCategory('Uncategorized')}
+    >
+      Uncategorized
+    </button>
+    {#each categories as category}
+      <button
+      class="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200
+      hover:bg-blue-400 hover:text-white
+      dark:hover:bg-blue-600 dark:hover:text-white
+      focus:outline-none focus:ring-2 focus:ring-blue-500 
+      dark:focus:ring-blue-400
+      {selectedCategory === category.name 
+        ? 'bg-blue-500 text-white dark:bg-blue-600' 
+        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}"
+        on:click={() => selectCategory(category.name)}
+      >
+        {category.name}
+      </button>
+    {/each}
   </div>
 
   <div class="relative w-full h-full" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
