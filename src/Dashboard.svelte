@@ -55,27 +55,50 @@
   function handleResize() {
     // Use setTimeout to ensure the new dimensions are captured
     setTimeout(() => {
-      containerWidth = window.innerWidth;
+      containerWidth = window.innerWidth / 2;
       containerHeight = window.innerHeight;
       layoutBookmarks();
     }, 0);
   }
 
   function layoutBookmarks() {
-    const padding = 10;
-    const bookmarkWidth = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
-    const bookmarkHeight = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
-    const columns = Math.floor((containerWidth - padding * 2) / bookmarkWidth);
-    const rows = Math.floor((containerHeight - padding * 2) / bookmarkHeight);
+  const padding = 10;
+  const bookmarkWidth = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
+  const bookmarkHeight = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
 
-    filteredBookmarks = filteredBookmarks?.map((bookmark, index) => {
-      const col = index % columns;
-      const row = Math.floor(index / columns);
-      const left = padding + col * bookmarkWidth;
-      const top = padding + row * bookmarkHeight;
-      return { ...bookmark, left, top, index };
-    });
-  }
+  const numberOfBookmarks = filteredBookmarks.length;
+
+  // Calculate the number of columns and rows
+  const columns = Math.min(numberOfBookmarks, Math.floor((containerWidth - padding * 2) / bookmarkWidth));
+  const rows = Math.ceil(numberOfBookmarks / columns);
+
+  // Calculate the total width and height required for bookmarks
+  const totalBookmarkWidth = columns * bookmarkWidth;
+  const totalBookmarkHeight = rows * bookmarkHeight;
+
+  // Calculate the horizontal and vertical centering offsets
+  const horizontalOffset = (containerWidth - totalBookmarkWidth) / 2;
+  const verticalOffset = 0 // (containerHeight - totalBookmarkHeight) / 2;
+
+  // Calculate horizontal and vertical spacing
+  const horizontalSpacing = bookmarkWidth;
+  const verticalSpacing = bookmarkHeight;
+
+  // Map bookmarks to their new positions
+  filteredBookmarks = filteredBookmarks?.map((bookmark, index) => {
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+
+    // Adjust positions with centering offsets
+    const left = horizontalOffset + col * horizontalSpacing;
+    const top = verticalOffset + row * verticalSpacing;
+
+    return { ...bookmark, left, top, index };
+  });
+}
+
+
+
 
   function getFaviconUrl(url) {
     try {
@@ -269,22 +292,20 @@ function selectCategory(name) {
     {/each}
   </div>
 
-  <div class="relative w-full h-full" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
+  <div class="relative w-1/2 h-full" bind:clientWidth={containerWidth} bind:clientHeight={containerHeight}>
     {#each filteredBookmarks as bookmark (bookmark.id)}
       <a
         href={bookmark.url}
         target="_blank"
         rel="noopener noreferrer"
         class="absolute rounded-lg shadow-lg flex flex-col items-center justify-center p-2 
-        transition-all duration-300 hover:scale-110 hover:z-10 
+        transition-all hover:scale-110 hover:z-10 
         {highlightedBookmark && highlightedBookmark.id === bookmark.id ? 'ring-4 ring-blue-500' : ''} 
         {dropTarget && dropTarget.id === bookmark.id ? 'border-2 border-blue-500' : ''} 
         dark:shadow-lg dark:shadow-gray-800 
         {iconSize == 'small' ? 'w-20' : iconSize == 'medium' ? 'w-30' : 'w-40'}
-        {iconSize == 'small' ? 'h-20' : iconSize == 'medium' ? 'h-30' : 'h-40'}"
+        {iconSize == 'small' ? 'h-20' : iconSize == 'medium' ? 'h-30' : 'h-40'} hover:border-2 border-blue-500"
         style="left: {bookmark.left}px; top: {bookmark.top}px;"
-        in:fade={{duration: 300}}
-        out:scale={{duration: 300}}
         draggable="true"
         on:dragstart={(e) => handleDragStart(e, bookmark)}
         on:dragover={(e) => handleDragOver(e, bookmark)}
