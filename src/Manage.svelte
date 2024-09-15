@@ -658,6 +658,6 @@
   isOpen={deleteAllCategoriesConfirmModalOpen}
   onClose={closeCategoriesDeleteModal}
   onOk={handleCategoriesDeleteOk}
-  message="Are you sure you want to delete all bookmarks?"
+  message="Are you sure you want to delete all categories?"
 />
 </div>
