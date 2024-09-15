@@ -21,6 +21,7 @@
   let draggedOverItem = null;
   let searchTerm = '';
   let searchResults = [];
+  let iconMovement = 'none'
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -34,6 +35,11 @@
     const savedSize = localStorage.getItem('iconSize');
     if (savedSize) {
       iconSize = savedSize;
+    }
+
+    const savedIconMovement = localStorage.getItem('iconMovement');
+    if (savedIconMovement) {
+      iconMovement = savedIconMovement;
     }
   });
 
@@ -239,8 +245,12 @@
 }
 
   // Save Config to local storage
-  function saveConfig() {
+  function saveIconSize() {
     localStorage.setItem('iconSize', iconSize);
+  }
+
+  function savedIconMovement() {
+    localStorage.setItem('iconMovement', iconMovement);
   }
 
   function exportData() {
@@ -441,9 +451,21 @@
               <button
                 class="px-4 py-2 m-2 rounded-full transition-colors duration-200
                       {iconSize === size ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
-                on:click={() => { iconSize = size; saveConfig(); }}
+                on:click={() => { iconSize = size; saveIconSize(); }}
               >
                 {size.charAt(0).toUpperCase() + size.slice(1)}
+              </button>
+            {/each}
+          </div>
+          <div class="mb-4 justify-between items-center">
+            <h2 class="text-lg font-semibold mr-4">Icon movement</h2>
+              {#each ['none', 'random'] as movement}
+              <button
+                class="px-4 py-2 m-2 rounded-full transition-colors duration-200
+                      {iconMovement === movement ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
+                on:click={() => { iconMovement = movement; savedIconMovement(); }}
+              >
+                {movement.charAt(0).toUpperCase() + movement.slice(1)}
               </button>
             {/each}
           </div>
