@@ -231,7 +231,7 @@ function selectCategory(name) {
 <div class="relative h-screen p-5 flex flex-col justify-center items-center" tabindex="-1">
   <button
     on:click={toggleDarkMode}
-    class="absolute top-4 left-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+    class="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
   >
     {#if $darkMode}
       <Sun size={24} />
@@ -242,7 +242,7 @@ function selectCategory(name) {
 
   <button
     on:click={goToManage}
-    class="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+    class="absolute top-4 left-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
   >
     <Cog size={24} />
   </button>

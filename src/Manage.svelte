@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { navigate } from "svelte-routing";
   import { ArrowLeft } from 'lucide-svelte';
-  import { Star, Star as StarOutline, GripVertical, Search, EyeOff, EyeIcon } from 'lucide-svelte';
+  import { Star, Star as StarOutline, GripVertical, Search, EyeOff, EyeIcon, Download, Upload } from 'lucide-svelte';
   import { Pencil, X } from 'lucide-svelte'; // Import the pencil and cross icons
   import WarningModal from './WarningModal.svelte';
   import ConfirmModal from './ConfirmModal.svelte';
@@ -301,8 +301,8 @@
   }
 </script>
 
-<div class="h-screen flex flex-col">
-  <div class="p-4 flex justify-between items-center bg-white dark:bg-gray-800 shadow-md">
+<div class="h-screen flex flex-col items-center">
+  <div class="p-4 flex justify-between items-center">
     <div class="flex items-center">
       <button
       class="px-4 py-2 rounded mr-2 {activeTab === 'bookmarks' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}"
@@ -323,17 +323,21 @@
         Config
     </button>
     </div>
-    <h1 class="text-3xl font-bold">Bookmarks Manager</h1>
+  </div>
 
+  <div class="absolute top-4 right-4 p-2">
     <div class="flex items-center">
       <button
-        class="bg-blue-500 text-white px-4 py-2 rounded mr-2 hover:bg-blue-600 transition-colors duration-200"
+        class="bg-blue-500 text-white px-4 py-2 mr-2 hover:bg-blue-600 transition-colors duration-200  rounded-full"
         on:click={exportData}
+        title="Export data"
       >
-        Export
+      <Download  size={24} />
       </button>
-      <label class="bg-green-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-green-600 transition-colors duration-200 mr-2">
-        Import
+      <label 
+      class="bg-green-500 rounded-full text-white px-4 py-2 cursor-pointer hover:bg-green-600 transition-colors duration-200 mr-2"
+      title="Import data">
+        <Upload  size={24} />
         <input
           type="file"
           accept=".json"
@@ -341,14 +345,13 @@
           class="hidden"
         />
       </label>
-      <button
-        on:click={goToDashboard}
-        class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-      >
-        <ArrowLeft size={24} />
-      </button>
     </div>
   </div>
+
+  <button on:click={goToDashboard}
+  class="absolute top-4 left-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200">
+<ArrowLeft size={24} />
+</button>
 
   <div class="flex-1 overflow-hidden">
     <div class="p-4 flex flex-col h-full">
@@ -356,7 +359,6 @@
         {#if activeTab === 'bookmarks'}
           <div class="mb-4 flex justify-between items-center">
             <div>
-              <h2 class="text-xl font-semibold mb-2">Add Bookmark</h2>
               <input
                 class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 type="text"
@@ -403,7 +405,6 @@
         {:else if activeTab === 'categories'}
           <div class="mb-4 flex justify-between items-center">
             <div>
-              <h2 class="text-xl font-semibold mb-2">Add Category</h2>
               <input
                 class="border p-2 mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 type="text"
@@ -432,9 +433,6 @@
             </div>
           </div>
         {:else if activeTab === 'config'}
-          <div class="mb-4 flex justify-between items-center">
-            <h2 class="text-xl font-semibold mb-2">Update Config</h2>
-          </div>
           <div class="mb-4 justify-between items-center">
             <h2 class="text-lg font-semibold mr-4">Icon Size</h2>
               {#each ['small', 'medium', 'large'] as size}
@@ -614,7 +612,7 @@
       </div>
     </div>
   </div>
-{/if}
+  {/if}
 
   {#if editingCategory}
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
@@ -655,7 +653,6 @@
     onOk={handleBookMarksDeleteOk}
     message="Are you sure you want to delete all bookmarks?"
   />
-
 
   <ConfirmModal
   isOpen={deleteAllCategoriesConfirmModalOpen}
