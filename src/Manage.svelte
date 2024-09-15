@@ -517,7 +517,6 @@
           </div>
         {:else if activeTab === 'categories'}
           <div class="mb-4">
-            <h2 class="text-xl font-semibold mb-2">Categories</h2>
             <table class="w-full">
               <thead class="sticky top-0 bg-white dark:bg-gray-800">
                 <tr>
