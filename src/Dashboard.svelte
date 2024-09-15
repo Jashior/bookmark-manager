@@ -26,29 +26,22 @@
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
     const storedCategories = localStorage.getItem('categories');
+    const savedSize = localStorage.getItem('iconSize');
+    const savedIconMovement = localStorage.getItem('iconMovement');
+
     if (storedBookmarks) {
       bookmarks = JSON.parse(storedBookmarks).filter(b => !b.hidden);
       layoutBookmarks();
       filteredBookmarks = [...bookmarks];
     }
-    if (storedCategories) {
-      categories = JSON.parse(storedCategories);
-    }
+    if (storedCategories) categories = JSON.parse(storedCategories);
     if (searchInput) searchInput.focus();
-    const savedSize = localStorage.getItem('iconSize');
-    if (savedSize) {
-      iconSize = savedSize;
-    }
-    const savedIconMovement = localStorage.getItem('iconMovement');
-    if (savedIconMovement) {
-      iconMovement = savedIconMovement;
-    }
-    // Add event listener for window resize
+    if (savedSize) iconSize = savedSize;
+    if (savedIconMovement) iconMovement = savedIconMovement;
+
     window.addEventListener('resize', handleResize);
-    // Add wheel event listener for mouse scroll
     window.addEventListener('wheel', handleScroll);
 
-    // Initial layout
     handleResize();
 
     if (iconMovement == 'random') {
@@ -56,8 +49,6 @@
       animateBookmarks();
     }
 
-
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleScroll);
@@ -66,31 +57,33 @@
   });
 
   function initializeBookmark(bookmark) {
-  const angle = Math.random() * 2 * Math.PI;
-  const speed = 1 + Math.random() * 1; // Increased speed range: 1 to 2
-  return {
-    ...bookmark,
-    left: Math.random() * (containerWidth - getBookmarkWidth()),
-    top: Math.random() * (containerHeight - getBookmarkHeight()),
-    velocity: {
-      x: Math.cos(angle) * speed,
-      y: Math.sin(angle) * speed
-    }
-  };
-}
+    if (iconMovement !== 'random') return;
+    const angle = Math.random() * 2 * Math.PI;
+    const speed = 2 + Math.random() * 1; // Increased speed range: 1 to 2
+    return {
+      ...bookmark,
+      left: Math.random() * (containerWidth - getBookmarkWidth()),
+      top: Math.random() * (containerHeight - getBookmarkHeight()),
+      velocity: {
+        x: Math.cos(angle) * speed,
+        y: Math.sin(angle) * speed
+      }
+    };
+  }
 
   function handleResize() {
-    // Use setTimeout to ensure the new dimensions are captured
     setTimeout(() => {
       containerWidth = window.innerWidth;
       containerHeight = window.innerHeight;
       layoutBookmarks();
+      
     }, 0);
   }
 
   function layoutBookmarks() {
-    if (iconMovement == 'none') {
-      const padding = 10;
+    if (iconMovement != 'none') return;
+
+    const padding = 10;
     const bookmarkWidth = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
     const bookmarkHeight = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
     const columns = Math.floor((containerWidth - padding * 2) / bookmarkWidth);
@@ -103,7 +96,6 @@
       const top = padding + row * bookmarkHeight;
       return { ...bookmark, left, top, index };
     });
-    }
   }
 
   function animateBookmarks() {
@@ -111,7 +103,6 @@
     let newLeft = bookmark.left + bookmark.velocity.x;
     let newTop = bookmark.top + bookmark.velocity.y;
 
-    // Check boundaries and reverse direction if necessary
     if (newLeft <= 0 || newLeft + getBookmarkWidth() >= containerWidth) {
       bookmark.velocity.x *= -1; // Increased bounce force
       newLeft = Math.max(0, Math.min(newLeft, containerWidth - getBookmarkWidth()));
@@ -153,11 +144,11 @@
 }
 
 function getBookmarkWidth() {
-  return iconSize === 'small' ? 100 : iconSize === 'medium' ? 150 : 200;
+  return iconSize === 'small' ? 120 : iconSize === 'medium' ? 150 : 200;
 }
 
 function getBookmarkHeight() {
-  return iconSize === 'small' ? 100 : iconSize === 'medium' ? 150 : 200;
+  return iconSize === 'small' ? 120 : iconSize === 'medium' ? 150 : 200;
 }
 
 function checkCollision(bookmark1, bookmark2) {
