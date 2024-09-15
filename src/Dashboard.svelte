@@ -18,10 +18,6 @@
   let selectedCategory = 'All';
   let currentCategoryIndex = 0;
   let iconSize = 'small'; // Default icon size
-  let containerWidth;
-  let containerHeight;
-  let animationFrameId;
-  let iconMovement = 'none';
 
   onMount(() => {
     const storedBookmarks = localStorage.getItem('bookmarks');
@@ -29,7 +25,6 @@
     if (storedBookmarks) {
       bookmarks = JSON.parse(storedBookmarks).filter(b => !b.hidden);
       layoutBookmarks();
-      filteredBookmarks = [...bookmarks];
     }
     if (storedCategories) {
       categories = JSON.parse(storedCategories);
@@ -39,10 +34,6 @@
     if (savedSize) {
       iconSize = savedSize;
     }
-    const savedIconMovement = localStorage.getItem('iconMovement');
-    if (savedIconMovement) {
-      iconMovement = savedIconMovement;
-    }
     // Add event listener for window resize
     window.addEventListener('resize', handleResize);
     // Add wheel event listener for mouse scroll
@@ -51,33 +42,15 @@
     // Initial layout
     handleResize();
 
-    if (iconMovement == 'random') {
-      bookmarks = bookmarks.map(initializeBookmark);
-      animateBookmarks();
-    }
-
-
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleScroll);
-      cancelAnimationFrame(animationFrameId);
     };
   });
 
-  function initializeBookmark(bookmark) {
-  const angle = Math.random() * 2 * Math.PI;
-  const speed = 1 + Math.random() * 1; // Increased speed range: 1 to 2
-  return {
-    ...bookmark,
-    left: Math.random() * (containerWidth - getBookmarkWidth()),
-    top: Math.random() * (containerHeight - getBookmarkHeight()),
-    velocity: {
-      x: Math.cos(angle) * speed,
-      y: Math.sin(angle) * speed
-    }
-  };
-}
+  let containerWidth;
+  let containerHeight;
 
   function handleResize() {
     // Use setTimeout to ensure the new dimensions are captured
@@ -89,8 +62,7 @@
   }
 
   function layoutBookmarks() {
-    if (iconMovement == 'none') {
-      const padding = 10;
+    const padding = 10;
     const bookmarkWidth = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
     const bookmarkHeight = iconSize == 'small' ? 100 : iconSize == 'medium' ? 150 : 200;
     const columns = Math.floor((containerWidth - padding * 2) / bookmarkWidth);
@@ -103,94 +75,7 @@
       const top = padding + row * bookmarkHeight;
       return { ...bookmark, left, top, index };
     });
-    }
   }
-
-  function animateBookmarks() {
-  filteredBookmarks = filteredBookmarks.map(bookmark => {
-    let newLeft = bookmark.left + bookmark.velocity.x;
-    let newTop = bookmark.top + bookmark.velocity.y;
-
-    // Check boundaries and reverse direction if necessary
-    if (newLeft <= 0 || newLeft + getBookmarkWidth() >= containerWidth) {
-      bookmark.velocity.x *= -1; // Increased bounce force
-      newLeft = Math.max(0, Math.min(newLeft, containerWidth - getBookmarkWidth()));
-    }
-    if (newTop <= 0 || newTop + getBookmarkHeight() >= containerHeight) {
-      bookmark.velocity.y *= -1; // Increased bounce force
-      newTop = Math.max(0, Math.min(newTop, containerHeight - getBookmarkHeight()));
-    }
-
-    let updatedBookmark = { ...bookmark, left: newLeft, top: newTop };
-
-    // Check for collisions with other bookmarks
-    filteredBookmarks.forEach(otherBookmark => {
-      if (bookmark.id !== otherBookmark.id) {
-        const collision = checkCollision(updatedBookmark, otherBookmark);
-        if (collision) {
-          // Adjust positions to prevent overlap
-          const adjustment = getCollisionAdjustment(updatedBookmark, otherBookmark);
-          updatedBookmark.left += adjustment.x;
-          updatedBookmark.top += adjustment.y;
-
-          // Update velocities for a more powerful bounce effect
-          const temp = { 
-            x: updatedBookmark.velocity.x * -1, 
-            y: updatedBookmark.velocity.y * -1 
-          };
-          updatedBookmark.velocity.x = otherBookmark.velocity.x * -1;
-          updatedBookmark.velocity.y = otherBookmark.velocity.y * -1;
-          otherBookmark.velocity.x = temp.x;
-          otherBookmark.velocity.y = temp.y;
-        }
-      }
-    });
-
-    return updatedBookmark;
-  });
-
-  animationFrameId = requestAnimationFrame(animateBookmarks);
-}
-
-function getBookmarkWidth() {
-  return iconSize === 'small' ? 100 : iconSize === 'medium' ? 150 : 200;
-}
-
-function getBookmarkHeight() {
-  return iconSize === 'small' ? 100 : iconSize === 'medium' ? 150 : 200;
-}
-
-function checkCollision(bookmark1, bookmark2) {
-  const rect1 = getBookmarkRect(bookmark1);
-  const rect2 = getBookmarkRect(bookmark2);
-
-  return !(rect1.right < rect2.left || 
-           rect1.left > rect2.right || 
-           rect1.bottom < rect2.top || 
-           rect1.top > rect2.bottom);
-}
-function getBookmarkRect(bookmark) {
-  return {
-    left: bookmark.left,
-    right: bookmark.left + getBookmarkWidth(),
-    top: bookmark.top,
-    bottom: bookmark.top + getBookmarkHeight()
-  };
-}
-
-function getCollisionAdjustment(bookmark1, bookmark2) {
-  const rect1 = getBookmarkRect(bookmark1);
-  const rect2 = getBookmarkRect(bookmark2);
-
-  const overlapX = Math.min(rect1.right - rect2.left, rect2.right - rect1.left);
-  const overlapY = Math.min(rect1.bottom - rect2.top, rect2.bottom - rect1.top);
-
-  if (overlapX < overlapY) {
-    return { x: overlapX * (rect1.left < rect2.left ? -1 : 1), y: 0 };
-  } else {
-    return { x: 0, y: overlapY * (rect1.top < rect2.top ? -1 : 1) };
-  }
-}
 
   function getFaviconUrl(url) {
     try {
@@ -260,8 +145,6 @@ function handleDrop(event) {
   
   layoutBookmarks();
   bookmarksStore.set(bookmarks);
-  // layoutBookmarks();
-  // bookmarksStore.set(bookmarks);
   
   draggedBookmark = null;
   dropTarget = null;
@@ -306,8 +189,13 @@ function handleDrop(event) {
 }
 
 function selectCategory(name) {
+  // Update the selected category
   selectedCategory = name;
+
+  // Determine the index of the selected category
   const index = name === 'All' ? 0 : categories.findIndex(category => category.name === name) + 1;
+
+  // Update the current category index
   currentCategoryIndex = index;
 }
 
@@ -393,8 +281,7 @@ function selectCategory(name) {
         {dropTarget && dropTarget.id === bookmark.id ? 'border-2 border-blue-500' : ''} 
         dark:shadow-lg dark:shadow-gray-800 
         {iconSize == 'small' ? 'w-20' : iconSize == 'medium' ? 'w-30' : 'w-40'}
-        {iconSize == 'small' ? 'h-20' : iconSize == 'medium' ? 'h-30' : 'h-40'}
-                 hover:border-2 border-blue-500"
+        {iconSize == 'small' ? 'h-20' : iconSize == 'medium' ? 'h-30' : 'h-40'}"
         style="left: {bookmark.left}px; top: {bookmark.top}px;"
         in:fade={{duration: 300}}
         out:scale={{duration: 300}}
